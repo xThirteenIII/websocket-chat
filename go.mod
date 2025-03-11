@@ -2,4 +2,7 @@ module websocket-chat
 
 go 1.23.4
 
-require golang.org/x/net v0.37.0 // indirect
+require (
+	github.com/coder/websocket v1.8.12 // indirect
+	golang.org/x/net v0.37.0 // indirect
+)
