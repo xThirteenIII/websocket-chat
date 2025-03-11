@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"golang.org/x/time/rate"
 )
@@ -14,7 +15,6 @@ import (
 
 // chatServer enables broadcasting to a range of subscribers.
 type chatServer struct {
-
 
     // subscriberMessageBuffer holds the maximum messages per subscriber that can be queued
     // before it is kicked out.
@@ -61,3 +61,19 @@ type subscriber struct {
     closeSlow   func()
 }
 
+// newChatServer constructs and returns a new chatServer, filled
+// with defaults.
+func newChatServer() *chatServer {
+
+    cs := &chatServer{
+        subscriberMessageBuffer:    16,
+        logf:                       log.Printf,
+        subscribers:                make(map[*subscriber]struct{}),
+        publishLimiter:             rate.NewLimiter(rate.Every(time.Millisecond * 100), 8),
+    }
+    cs.serveMux.Handle("/", http.FileServer(http.Dir(".")))
+    cs.serveMux.HandleFunc("/subscribe", cs.subscribeHandler)
+    cs.serveMux.HandleFunc("/publish", cs.publishHandler)
+
+    return cs
+}
