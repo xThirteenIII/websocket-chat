@@ -57,8 +57,8 @@ type chatServer struct {
 // Messages are sent on the messages channel and if the client cannot keepup
 // with the messages, closeSlow is called.
 type subscriber struct {
-    messagesCh  chan []byte
     closeSlow   func()
+    messagesCh  chan []byte
 }
 
 func (cs *chatServer)ServeHTTP(w http.ResponseWriter, r *http.Request) {
