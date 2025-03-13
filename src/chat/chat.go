@@ -61,9 +61,13 @@ type subscriber struct {
     closeSlow   func()
 }
 
+func (cs *chatServer)ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    cs.serveMux.ServeHTTP(w, r)
+}
+
 // newChatServer constructs and returns a new chatServer, filled
 // with defaults.
-func newChatServer() *chatServer {
+func NewChatServer() *chatServer {
 
     cs := &chatServer{
         subscriberMessageBuffer:    16,

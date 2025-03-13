@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net"
+	"net/http"
 	"os"
+	"os/signal"
+	"time"
+	"websocket-chat/src/chat"
 )
 
 //import "github.com/coder/websocket"
@@ -23,7 +28,6 @@ import (
 */
 
 // Documentation @:  https://www.rfc-editor.org/rfc/rfc6455.html#section-1.1
-
 func main(){
 
     log.SetFlags(0)
@@ -57,5 +61,32 @@ func run() error {
 
     log.Printf("listening on ws://%v", listener.Addr())
 
-    return nil
+    cs := chat.NewChatServer()
+    server := &http.Server{
+        Handler: cs,
+        ReadTimeout: 10 * time.Second,
+        WriteTimeout: 10 * time.Second,
+    }
+
+    // why this error handling manouvre with channels?
+    // cant just return the error and check it?
+    errCh := make(chan error, 1)
+    go func(){
+        errCh <- server.Serve(listener)
+    }()
+
+    signalsCh := make(chan os.Signal, 1)
+    // Notify causes package signal to relay incoming signals to signalsCh.
+    signal.Notify(signalsCh, os.Interrupt)
+    select {
+    case err := <- errCh:
+        log.Printf("failed to serve: %v", err)
+    case sig := <- signalsCh:
+        log.Printf("terminating: %v", sig)
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
+    defer cancel()
+
+    return server.Shutdown(ctx)
 }
